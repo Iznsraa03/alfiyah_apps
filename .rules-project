@@ -1,0 +1,230 @@
+# AI Agent Rules – Alfiyah Apps (Flutter + GetX)
+
+==================================================
+🔥 GLOBAL EXECUTION DIRECTIVE (WAJIB DIPATUHI)
+==================================================
+
+1. AI WAJIB membaca seluruh rules ini sebelum mengeksekusi prompt.
+2. AI WAJIB mengikuti rules ini dalam setiap response.
+3. AI TIDAK BOLEH mengabaikan rules meskipun user tidak menyebutkannya kembali.
+4. Jika terjadi konflik antara prompt dan rules, AI harus tetap mengikuti rules arsitektur project.
+
+==================================================
+==================================================
+
+AI HARUS:
+
+- Fokus hanya pada permintaan user.
+- Tidak menjelaskan teori jika tidak diminta.
+- Tidak verbose.
+- Tidak mengulang konteks yang sudah jelas.
+- Tidak memberikan alternatif yang tidak diminta.
+- Tidak membuat kode tambahan di luar scope.
+- Menghasilkan jawaban langsung ke solusi.
+
+AI DILARANG:
+
+- Over-explaining.
+- Menambahkan opini pribadi.
+- Memberikan 3-4 variasi solusi jika tidak diminta.
+- Menulis ulang file yang tidak berubah.
+- Membuat refactor besar jika tidak diminta.
+
+Tujuan:
+➡ Hemat token
+➡ Eksekusi cepat
+➡ Output presisi
+➡ Minim noise
+
+==================================================
+1. PROJECT CONTEXT
+==================================================
+
+Aplikasi booking jasa (Wedding, Make Up, dll) berbasis Flutter
+Menggunakan arsitektur Modular GetX.
+
+Struktur utama:
+- modules/
+- components/
+- Utils/
+- routes/
+- main.dart
+
+==================================================
+2. ARSITEKTUR WAJIB
+==================================================
+
+WAJIB:
+- GetX
+- .obs
+- Obx()
+- Bindings
+- GetPage routing
+
+DILARANG:
+- setState
+- Provider / Bloc / Riverpod
+- Navigator manual
+
+==================================================
+3. STRUKTUR MODULE
+==================================================
+
+Setiap fitur harus:
+
+modules/
+  nama_module/
+    bindings/
+    controllers/
+    views/
+
+Tidak mencampur logic ke view.
+
+==================================================
+4. ROUTING RULES
+==================================================
+
+Navigasi hanya boleh:
+- Get.toNamed()
+- Get.offNamed()
+- Get.offAllNamed()
+
+Route:
+- Ditambahkan di app_routes.dart
+- Ditambahkan di app_pages.dart
+- Path lowercase (contoh: /booking)
+
+==================================================
+5. UI & DESIGN RULES
+==================================================
+
+WAJIB:
+- Gunakan AppColors
+- Tidak hardcode warna
+- BorderRadius 12–24
+- Desain clean & elegant
+- Spacing rapi
+
+Button:
+- ElevatedButton.styleFrom
+- overlayColor wajib
+
+==================================================
+6. STATE MANAGEMENT RULES
+==================================================
+
+Deklarasi:
+```
+final value = 0.obs;
+```
+
+Update:
+```
+value.value = x;
+```
+
+Reactive:
+```
+Obx(() => Widget())
+```
+
+==================================================
+7. CONTROLLER RULES
+==================================================
+
+Controller hanya berisi:
+- State
+- Logic
+- API call
+- Navigation trigger
+
+Tidak boleh UI code.
+
+==================================================
+8. REUSABLE COMPONENT RULES
+==================================================
+
+Reusable UI harus di:
+components/
+
+Tidak duplikasi widget.
+
+==================================================
+9. DASHBOARD RULES
+==================================================
+
+Gunakan:
+```
+selectedIndex = 0.obs
+```
+
+Switch halaman via reactive index.
+Tidak membuat Navigator baru di tab.
+
+==================================================
+10. CLEAN CODE STANDARD
+==================================================
+
+- Variable jelas
+- Tidak duplikasi
+- Tidak nested berlebihan
+- File sesuai tanggung jawab
+
+==================================================
+11. ERROR PREVENTION
+==================================================
+
+DILARANG:
+- Recursive binding
+- Get.put() di View jika sudah ada Binding
+- Hardcoded route string
+
+==================================================
+12. SCALABILITY RULES
+==================================================
+
+Jika kompleks:
+- services/
+- model
+- repository pattern
+- Hindari hardcoded data
+
+==================================================
+13. FORBIDDEN PRACTICES
+==================================================
+
+- Mengubah arsitektur
+- Menghapus binding
+- Menggunakan state management lain
+- Menggunakan warna di luar AppColors
+- Semua logic dalam satu file
+
+==================================================
+14. CODE OUTPUT STANDARD
+==================================================
+
+Jika generate kode:
+- Full file
+- Sertakan lokasi file
+- Tidak ambigu
+- Tidak potongan kecil
+
+==================================================
+15. PROJECT IDENTITY
+==================================================
+
+Theme:
+- Primary: #F875AA
+- Secondary: Soft Pink
+- Background: Soft White
+- Style: Elegant, Feminine, Premium
+
+Semua UI harus mencerminkan identitas ini.
+
+==================================================
+✅ END OF RULES
+==================================================
+
+AI WAJIB membaca file ini sebelum setiap eksekusi.
+AI WAJIB mengikuti seluruh aturan.
+AI WAJIB menjaga efisiensi token.

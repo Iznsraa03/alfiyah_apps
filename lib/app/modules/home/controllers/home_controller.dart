@@ -82,4 +82,8 @@ class HomeController extends GetxController {
   void goToQuickAccess(String route) {
     Get.toNamed(route);
   }
+
+  void toServices(){
+    Get.toNamed(Routes.SERVICES);
+  }
 }

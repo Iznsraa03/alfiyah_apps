@@ -154,7 +154,7 @@ class HomeView extends GetView<HomeController> {
                 if (!controller.isMainCardVisible) {
                   return const SizedBox.shrink();
                 }
-                return mainCard();
+                return mainCard(onPressed: controller.toServices);
               }),
               const Gap(32),
               Row(

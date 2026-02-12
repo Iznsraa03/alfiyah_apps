@@ -1,7 +1,7 @@
 import 'package:alfiyah_apps/app/Utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
-Container mainCard() {
+Container mainCard({required void Function()? onPressed}) {
     return Container(
       width: double.infinity,
       height: 300,
@@ -46,7 +46,7 @@ Container mainCard() {
                     style: TextStyle(fontSize: 32, fontWeight: FontWeight.w300),
                   ),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: onPressed,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                     ).copyWith(overlayColor: WidgetStatePropertyAll(AppColors.secondary.withValues(alpha: 30.0))),

@@ -1,17 +1,36 @@
+import 'dart:async';
 import 'package:alfiyah_apps/app/data/services/booking_service.dart';
 import 'package:alfiyah_apps/app/data/services/service_service.dart';
 import 'package:get/get.dart';
 
 class BookingController extends GetxController {
+  static const _refreshInterval = Duration(seconds: 5);
+
   final bookings = <Map<String, dynamic>>[].obs;
   final isLoading = false.obs;
   final serviceTypesMap = <int, Map<String, dynamic>>{}.obs;
+  Timer? _refreshTimer;
 
   @override
   void onInit() {
     super.onInit();
     loadServiceTypes();
     loadBookings();
+    _startAutoRefresh();
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
+      loadServiceTypes();
+      loadBookings();
+    });
+  }
+
+  @override
+  void onClose() {
+    _refreshTimer?.cancel();
+    super.onClose();
   }
 
   void loadServiceTypes() async {

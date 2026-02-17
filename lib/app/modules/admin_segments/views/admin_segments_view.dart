@@ -42,17 +42,135 @@ class AdminSegmentsView extends GetView<AdminSegmentsController> {
           );
         }
 
-        return ListView.separated(
+        final segments = controller.filteredSegments;
+
+        return ListView(
           padding: const EdgeInsets.all(16),
-          itemCount: controller.segments.length,
-          separatorBuilder: (_, __) => const Gap(12),
-          itemBuilder: (context, index) {
-            final item = controller.segments[index];
-            return _segmentCard(item);
-          },
+          children: [
+            _categoryCapsules(controller),
+            const Gap(12),
+            _categoryDescription(controller),
+            const Gap(16),
+            if (segments.isEmpty)
+              _emptyCategoryState()
+            else
+              ...segments
+                  .map((item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _segmentCard(item),
+                      ))
+                  .toList(),
+          ],
         );
       }),
     );
+  }
+
+  Widget _categoryCapsules(AdminSegmentsController controller) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Obx(() {
+        return Row(
+          children: controller.categoryOptions.map((item) {
+            final key = item['key'] ?? '';
+            final label = item['label'] ?? '';
+            final isSelected = controller.selectedCategory.value == key;
+            final colors = _categoryColors(key);
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: GestureDetector(
+                onTap: () => controller.selectCategory(key),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected ? colors.background : AppColors.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: isSelected ? colors.border : AppColors.primary.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? colors.text : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      }),
+    );
+  }
+
+  Widget _categoryDescription(AdminSegmentsController controller) {
+    return Obx(() {
+      final description = controller.categoryDescription;
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.08)),
+        ),
+        child: Text(
+          description,
+          style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+        ),
+      );
+    });
+  }
+
+  Widget _emptyCategoryState() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Center(
+        child: Text('Belum ada data pada kategori ini.'),
+      ),
+    );
+  }
+
+  _CategoryColors _categoryColors(String key) {
+    switch (key) {
+      case 'loyal':
+        return _CategoryColors(
+          background: AppColors.primary.withValues(alpha: 0.15),
+          border: AppColors.primary,
+          text: AppColors.primary,
+        );
+      case 'aktif':
+        return _CategoryColors(
+          background: AppColors.secondary.withValues(alpha: 0.2),
+          border: AppColors.secondary,
+          text: AppColors.secondary,
+        );
+      case 'potensial':
+        return _CategoryColors(
+          background: AppColors.accent.withValues(alpha: 0.18),
+          border: AppColors.accent,
+          text: AppColors.accent,
+        );
+      case 'pasif':
+        return _CategoryColors(
+          background: AppColors.primary.withValues(alpha: 0.08),
+          border: AppColors.primary.withValues(alpha: 0.5),
+          text: AppColors.primary,
+        );
+      default:
+        return _CategoryColors(
+          background: AppColors.surface,
+          border: AppColors.primary.withValues(alpha: 0.2),
+          text: AppColors.textPrimary,
+        );
+    }
   }
 
   Widget _segmentCard(Map<String, dynamic> item) {
@@ -128,10 +246,22 @@ class AdminSegmentsView extends GetView<AdminSegmentsController> {
           const Gap(4),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: Colors.black.withValues(alpha: 0.6)),
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
           ),
         ],
       ),
     );
   }
+}
+
+class _CategoryColors {
+  const _CategoryColors({
+    required this.background,
+    required this.border,
+    required this.text,
+  });
+
+  final Color background;
+  final Color border;
+  final Color text;
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:alfiyah_apps/app/routes/app_pages.dart';
 import 'package:alfiyah_apps/app/data/services/booking_service.dart';
@@ -5,11 +6,14 @@ import 'package:alfiyah_apps/app/data/services/service_service.dart';
 import 'package:get/get.dart';
 
 class AdminHomeController extends GetxController {
+  static const _refreshInterval = Duration(seconds: 5);
+
   final selectedFilter = 'all'.obs;
   final isLoading = false.obs;
   final serviceTypesMap = <int, Map<String, dynamic>>{}.obs;
   
   final bookings = <Map<String, dynamic>>[].obs;
+  Timer? _refreshTimer;
   
   final _sampleBookings = [
     {
@@ -110,6 +114,21 @@ class AdminHomeController extends GetxController {
     super.onInit();
     loadServiceTypes();
     loadBookings();
+    _startAutoRefresh();
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
+      loadServiceTypes();
+      loadBookings();
+    });
+  }
+
+  @override
+  void onClose() {
+    _refreshTimer?.cancel();
+    super.onClose();
   }
 
   void loadServiceTypes() async {

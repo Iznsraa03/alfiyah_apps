@@ -6,16 +6,16 @@ import '../modules/admin_booking_detail/bindings/admin_booking_detail_binding.da
 import '../modules/admin_booking_detail/views/admin_booking_detail_view.dart';
 import '../modules/admin_home/bindings/admin_home_binding.dart';
 import '../modules/admin_home/views/admin_home_view.dart';
+import '../modules/admin_segments/bindings/admin_segments_binding.dart';
+import '../modules/admin_segments/views/admin_segments_view.dart';
 import '../modules/admin_services/bindings/admin_services_binding.dart';
 import '../modules/admin_services/views/admin_services_view.dart';
 import '../modules/booking/bindings/booking_binding.dart';
-import '../modules/edit_profile/bindings/edit_profile_binding.dart';
-import '../modules/edit_profile/views/edit_profile_view.dart';
-import '../modules/service_detail/bindings/service_detail_binding.dart';
-import '../modules/service_detail/views/service_detail_view.dart';
 import '../modules/booking/views/booking_view.dart';
 import '../modules/dashboard/bindings/dashboard_binding.dart';
 import '../modules/dashboard/views/dashboard_view.dart';
+import '../modules/edit_profile/bindings/edit_profile_binding.dart';
+import '../modules/edit_profile/views/edit_profile_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/login/bindings/login_binding.dart';
@@ -24,6 +24,8 @@ import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
 import '../modules/register/bindings/register_binding.dart';
 import '../modules/register/views/register_view.dart';
+import '../modules/service_detail/bindings/service_detail_binding.dart';
+import '../modules/service_detail/views/service_detail_view.dart';
 import '../modules/welcome/bindings/welcome_binding.dart';
 import '../modules/welcome/views/welcome_view.dart';
 
@@ -57,7 +59,7 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.SERVICES,
-      page: () =>  ServicesView(),
+      page: () => ServicesView(),
       binding: ServicesBinding(),
     ),
     GetPage(
@@ -99,6 +101,11 @@ class AppPages {
       name: _Paths.SERVICE_DETAIL,
       page: () => const ServiceDetailView(),
       binding: ServiceDetailBinding(),
+    ),
+    GetPage(
+      name: _Paths.ADMIN_SEGMENTS,
+      page: () => const AdminSegmentsView(),
+      binding: AdminSegmentsBinding(),
     ),
   ];
 }

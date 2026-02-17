@@ -35,52 +35,52 @@ class AdminHomeView extends GetView<AdminHomeController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Stats Summary
-              const Text(
-                'Ringkasan Hari Ini',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const Gap(12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _statCard(
-                      'Total',
-                      '${controller.stats['total']}',
-                      Colors.blue,
-                    ),
-                  ),
-                  const Gap(12),
-                  Expanded(
-                    child: _statCard(
-                      'Pending',
-                      '${controller.stats['pending']}',
-                      Colors.orange,
-                    ),
-                  ),
-                ],
-              ),
-              const Gap(12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _statCard(
-                      'High Priority',
-                      '${controller.stats['high']}',
-                      Colors.red,
-                    ),
-                  ),
-                  const Gap(12),
-                  Expanded(
-                    child: _statCard(
-                      'VIP',
-                      '${controller.stats['vip']}',
-                      Colors.purple,
-                    ),
-                  ),
-                ],
-              ),
-              const Gap(24),
+              // // Stats Summary
+              // const Text(
+              //   'Ringkasan Hari Ini',
+              //   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              // ),
+              // const Gap(12),
+              // Row(
+              //   children: [
+              //     Expanded(
+              //       child: _statCard(
+              //         'Total',
+              //         '${controller.stats['total']}',
+              //         Colors.blue,
+              //       ),
+              //     ),
+              //     const Gap(12),
+              //     Expanded(
+              //       child: _statCard(
+              //         'Pending',
+              //         '${controller.stats['pending']}',
+              //         Colors.orange,
+              //       ),
+              //     ),
+              //   ],
+              // ),
+              // const Gap(12),
+              // Row(
+              //   children: [
+              //     Expanded(
+              //       child: _statCard(
+              //         'High Priority',
+              //         '${controller.stats['high']}',
+              //         Colors.red,
+              //       ),
+              //     ),
+              //     const Gap(12),
+              //     Expanded(
+              //       child: _statCard(
+              //         'VIP',
+              //         '${controller.stats['vip']}',
+              //         Colors.purple,
+              //       ),
+              //     ),
+              //   ],
+              // ),
+              // const Gap(24),
               // Quick Actions
               const Text(
                 'Quick Actions',
@@ -99,9 +99,9 @@ class AdminHomeView extends GetView<AdminHomeController> {
                   const Gap(12),
                   Expanded(
                     child: _actionButton(
-                      'Reports',
-                      Icons.analytics_outlined,
-                      () {},
+                      'Segmentasi',
+                      Icons.groups_2_outlined,
+                      controller.goToSegments,
                     ),
                   ),
                 ],

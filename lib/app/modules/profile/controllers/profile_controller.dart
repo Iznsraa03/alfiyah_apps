@@ -16,16 +16,16 @@ class ProfileController extends GetxController {
       'subtitle': 'Ubah data pribadi kamu',
       'icon': 'edit',
     },
-    {
-      'title': 'Pengaturan',
-      'subtitle': 'Kelola preferensi aplikasi',
-      'icon': 'settings',
-    },
-    {
-      'title': 'Bantuan',
-      'subtitle': 'FAQ dan dukungan',
-      'icon': 'help',
-    },
+    // {
+    //   'title': 'Pengaturan',
+    //   'subtitle': 'Kelola preferensi aplikasi',
+    //   'icon': 'settings',
+    // },
+    // {
+    //   'title': 'Bantuan',
+    //   'subtitle': 'FAQ dan dukungan',
+    //   'icon': 'help',
+    // },
   ];
 
   @override

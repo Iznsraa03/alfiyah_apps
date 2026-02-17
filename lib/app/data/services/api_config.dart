@@ -9,6 +9,7 @@ class ApiConfig {
   static const String serviceTypes = '/services/types';
   static const String bookings = '/bookings/';
   static const String myBookings = '/bookings/me';
+  static const String segments = '/segments/';
   
   // Headers
   static Map<String, String> getHeaders({String? token}) {

@@ -16,6 +16,7 @@ abstract class Routes {
   static const ADMIN_SERVICES = _Paths.ADMIN_SERVICES;
   static const EDIT_PROFILE = _Paths.EDIT_PROFILE;
   static const SERVICE_DETAIL = _Paths.SERVICE_DETAIL;
+  static const ADMIN_SEGMENTS = _Paths.ADMIN_SEGMENTS;
 }
 
 abstract class _Paths {
@@ -33,4 +34,5 @@ abstract class _Paths {
   static const ADMIN_SERVICES = '/admin-services';
   static const EDIT_PROFILE = '/edit-profile';
   static const SERVICE_DETAIL = '/service-detail';
+  static const ADMIN_SEGMENTS = '/admin-segments';
 }

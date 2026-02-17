@@ -146,7 +146,11 @@ class AdminHomeController extends GetxController {
   String getServiceName(int id) => serviceTypesMap[id]?['name'] ?? 'Service';
 
   void goToManageServices() {
-    Get.toNamed('/admin-services');
+    Get.toNamed(Routes.ADMIN_SERVICES);
+  }
+
+  void goToSegments() {
+    Get.toNamed(Routes.ADMIN_SEGMENTS);
   }
 
   void logOut(){

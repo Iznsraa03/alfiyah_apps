@@ -35,47 +35,47 @@ class BookingView extends GetView<BookingController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.secondary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(Icons.event_available, color: AppColors.primary),
-                    ),
-                    const Gap(12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Jadwal terdekat',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Gap(6),
-                          Text(
-                            'Wedding Make Up Premium • 11 Feb 2026',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // Container(
+              //   width: double.infinity,
+              //   padding: const EdgeInsets.all(16),
+              //   decoration: BoxDecoration(
+              //     color: AppColors.secondary.withValues(alpha: 0.2),
+              //     borderRadius: BorderRadius.circular(16),
+              //   ),
+              //   child: Row(
+              //     children: [
+              //       Container(
+              //         width: 48,
+              //         height: 48,
+              //         decoration: BoxDecoration(
+              //           color: AppColors.primary.withValues(alpha: 0.12),
+              //           borderRadius: BorderRadius.circular(16),
+              //         ),
+              //         child: Icon(Icons.event_available, color: AppColors.primary),
+              //       ),
+              //       const Gap(12),
+              //       Expanded(
+              //         child: Column(
+              //           crossAxisAlignment: CrossAxisAlignment.start,
+              //           children: const [
+              //             Text(
+              //               'Jadwal terdekat',
+              //               style: TextStyle(
+              //                 fontSize: 12,
+              //                 fontWeight: FontWeight.w600,
+              //               ),
+              //             ),
+              //             Gap(6),
+              //             Text(
+              //               'Wedding Make Up Premium • 11 Feb 2026',
+              //               style: TextStyle(fontSize: 14),
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
               const Gap(24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -137,27 +137,27 @@ class BookingView extends GetView<BookingController> {
                 );
               }),
               const Gap(32),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ).copyWith(
-                    overlayColor: WidgetStatePropertyAll(
-                      AppColors.secondary.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: const Text(
-                    'Buat Booking Baru',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
+              // SizedBox(
+              //   width: double.infinity,
+              //   height: 48,
+              //   child: ElevatedButton(
+              //     onPressed: () {},
+              //     style: ElevatedButton.styleFrom(
+              //       backgroundColor: AppColors.primary,
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius: BorderRadius.circular(16),
+              //       ),
+              //     ).copyWith(
+              //       overlayColor: WidgetStatePropertyAll(
+              //         AppColors.secondary.withValues(alpha: 0.3),
+              //       ),
+              //     ),
+              //     child: const Text(
+              //       'Buat Booking Baru',
+              //       style: TextStyle(color: Colors.white),
+              //     ),
+              //   ),
+              // ),
               Gap(100)
             ],
           ),

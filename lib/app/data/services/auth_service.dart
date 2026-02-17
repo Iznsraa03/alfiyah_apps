@@ -108,7 +108,7 @@ class AuthService {
       developer.log('Status Code: ${response.statusCode}', name: 'AuthService');
       developer.log('Body: ${response.body}', name: 'AuthService');
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
         developer.log('✅ Register Success: ${data['email']}', name: 'AuthService');
         return {

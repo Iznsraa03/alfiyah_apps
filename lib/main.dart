@@ -8,10 +8,11 @@ import 'app/routes/app_pages.dart';
 
 void main() {
   runApp(
-    DevicePreview(
-      enabled: !kReleaseMode,
-      builder: (context) => const MyApp(),
-    ),
+    // DevicePreview(
+    //   enabled: !kReleaseMode,
+    //   builder: (context) => 
+    // ),
+    const MyApp(),
   );
 }
 
@@ -25,7 +26,6 @@ class MyApp extends StatelessWidget {
       title: "Alfiyah Apps",
       initialRoute: AppPages.INITIAL,
       getPages: AppPages.routes,
-      // Device Preview configuration
       useInheritedMediaQuery: true,
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,

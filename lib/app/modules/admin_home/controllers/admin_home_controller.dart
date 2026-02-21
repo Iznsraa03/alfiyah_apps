@@ -6,70 +6,13 @@ import 'package:alfiyah_apps/app/data/services/service_service.dart';
 import 'package:get/get.dart';
 
 class AdminHomeController extends GetxController {
-  static const _refreshInterval = Duration(seconds: 5);
-
   final selectedFilter = 'all'.obs;
   final isLoading = false.obs;
   final serviceTypesMap = <int, Map<String, dynamic>>{}.obs;
-  
-  final bookings = <Map<String, dynamic>>[].obs;
-  Timer? _refreshTimer;
-  
-  final _sampleBookings = [
-    {
-      'id': 1,
-      'user_name': 'Sarah Amelia',
-      'service_type': 'Wedding Make Up Premium',
-      'tanggal_acara': '2026-02-15 14:00',
-      'jumlah_client': 150,
-      'price_locked': '12500000.00',
-      'status': 'pending',
-      'priority_score': 95,
-      'priority_segment': 'high',
-      'urgency_level': 'urgent',
-      'monetary_level': 'vip',
-    },
-    {
-      'id': 2,
-      'user_name': 'Dina Kartika',
-      'service_type': 'Engagement Photo',
-      'tanggal_acara': '2026-02-20 10:00',
-      'jumlah_client': 2,
-      'price_locked': '3200000.00',
-      'status': 'confirmed',
-      'priority_score': 78,
-      'priority_segment': 'medium',
-      'urgency_level': 'soon',
-      'monetary_level': 'premium',
-    },
-    {
-      'id': 3,
-      'user_name': 'Rina Putri',
-      'service_type': 'Prewedding Indoor',
-      'tanggal_acara': '2026-03-05 09:00',
-      'jumlah_client': 2,
-      'price_locked': '5750000.00',
-      'status': 'pending',
-      'priority_score': 62,
-      'priority_segment': 'medium',
-      'urgency_level': 'upcoming',
-      'monetary_level': 'premium',
-    },
-    {
-      'id': 4,
-      'user_name': 'Maya Sari',
-      'service_type': 'Reguler Party',
-      'tanggal_acara': '2026-03-10 15:00',
-      'jumlah_client': 1,
-      'price_locked': '200000.00',
-      'status': 'pending',
-      'priority_score': 45,
-      'priority_segment': 'low',
-      'urgency_level': 'upcoming',
-      'monetary_level': 'regular',
-    },
-  ];
 
+  final bookings = <Map<String, dynamic>>[].obs;
+  StreamSubscription<Map<String, dynamic>>? _bookingStream;
+  
   List<Map<String, dynamic>> get filteredBookings {
     if (selectedFilter.value == 'all') {
       return bookings;
@@ -114,20 +57,24 @@ class AdminHomeController extends GetxController {
     super.onInit();
     loadServiceTypes();
     loadBookings();
-    _startAutoRefresh();
+    _startBookingStream();
   }
 
-  void _startAutoRefresh() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
-      loadServiceTypes();
-      loadBookings();
+  void _startBookingStream() {
+    _bookingStream?.cancel();
+    _bookingStream = BookingService.streamBookings().listen((event) {
+      final payload = event['data'];
+      if (payload is Map<String, dynamic>) {
+        _upsertBooking(payload);
+      }
+    }, onError: (error) {
+      developer.log('❌ Booking stream error: $error', name: 'AdminHome');
     });
   }
 
   @override
   void onClose() {
-    _refreshTimer?.cancel();
+    _bookingStream?.cancel();
     super.onClose();
   }
 
@@ -153,13 +100,60 @@ class AdminHomeController extends GetxController {
     isLoading.value = true;
     final result = await BookingService.getAllBookings();
     isLoading.value = false;
-    
+
     if (result['success'] == true) {
       bookings.value = (result['data'] as List).cast<Map<String, dynamic>>();
+      _sortBookingsByLatest();
       developer.log('✅ Bookings loaded: ${bookings.length} items', name: 'AdminHome');
     } else {
       developer.log('❌ Failed to load bookings', name: 'AdminHome');
     }
+  }
+
+  void _upsertBooking(Map<String, dynamic> booking) {
+    final bookingId = booking['id'] as int?;
+    if (bookingId == null) {
+      return;
+    }
+
+    final index = bookings.indexWhere((item) => item['id'] == bookingId);
+    if (index == -1) {
+      bookings.add(booking);
+    } else {
+      bookings[index] = booking;
+    }
+    _sortBookingsByLatest();
+  }
+
+  void _sortBookingsByLatest() {
+    if (bookings.isEmpty) {
+      return;
+    }
+
+    bookings.sort((a, b) {
+      final aDate = _extractLatestTimestamp(a);
+      final bDate = _extractLatestTimestamp(b);
+      return bDate.compareTo(aDate);
+    });
+    bookings.refresh();
+  }
+
+  DateTime _extractLatestTimestamp(Map<String, dynamic> booking) {
+    final fields = [
+      booking['updated_priority_at'],
+      booking['tanggal_booking'],
+      booking['tanggal_acara'],
+    ];
+
+    for (final value in fields) {
+      if (value is String) {
+        final parsed = DateTime.tryParse(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   String getServiceName(int id) => serviceTypesMap[id]?['name'] ?? 'Service';

@@ -133,9 +133,13 @@ import 'package:flutter/material.dart';
 class AppColors{
   static const primary = Color(0xFFF875AA);
   static const secondary = Color(0xFFFBACCC);
+  static const accent = Color(0xFFF48FB1);
   static const surface = Color(0xFFF1D1D0);
   static const background = Color(0xFFF4F9F9);
+  static const textPrimary = Color(0xFF1F1F1F);
+  static const textSecondary = Color(0xFF6B6B6B);
 }
+
 ```
 ###  Path: `/lib/app/components/bookingCard.dart`
 
@@ -1292,15 +1296,19 @@ class ServicesBinding extends Bindings {
 ###  Path: `/lib/app/modules/Services/controllers/services_controller.dart`
 
 ```dart
+import 'dart:async';
 import 'package:alfiyah_apps/app/data/services/service_service.dart';
 import 'package:alfiyah_apps/app/routes/app_pages.dart';
 import 'package:get/get.dart';
 
 class ServicesController extends GetxController {
+  static const _refreshInterval = Duration(seconds: 5);
+
   final searchQuery = ''.obs;
   final isLoading = false.obs;
 
   final packages = <Map<String, dynamic>>[].obs;
+  Timer? _refreshTimer;
 
   // Sample data (akan diganti dengan API)
   // final _samplePackages = [
@@ -1428,6 +1436,20 @@ class ServicesController extends GetxController {
   void onInit() {
     super.onInit();
     loadPackages();
+    _startAutoRefresh();
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
+      loadPackages();
+    });
+  }
+
+  @override
+  void onClose() {
+    _refreshTimer?.cancel();
+    super.onClose();
   }
 
   void loadPackages() async {
@@ -2106,6 +2128,7 @@ class AdminHomeBinding extends Bindings {
 ###  Path: `/lib/app/modules/admin_home/controllers/admin_home_controller.dart`
 
 ```dart
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:alfiyah_apps/app/routes/app_pages.dart';
 import 'package:alfiyah_apps/app/data/services/booking_service.dart';
@@ -2113,11 +2136,14 @@ import 'package:alfiyah_apps/app/data/services/service_service.dart';
 import 'package:get/get.dart';
 
 class AdminHomeController extends GetxController {
+  static const _refreshInterval = Duration(seconds: 5);
+
   final selectedFilter = 'all'.obs;
   final isLoading = false.obs;
   final serviceTypesMap = <int, Map<String, dynamic>>{}.obs;
   
   final bookings = <Map<String, dynamic>>[].obs;
+  Timer? _refreshTimer;
   
   final _sampleBookings = [
     {
@@ -2218,6 +2244,21 @@ class AdminHomeController extends GetxController {
     super.onInit();
     loadServiceTypes();
     loadBookings();
+    _startAutoRefresh();
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
+      loadServiceTypes();
+      loadBookings();
+    });
+  }
+
+  @override
+  void onClose() {
+    _refreshTimer?.cancel();
+    super.onClose();
   }
 
   void loadServiceTypes() async {
@@ -2307,52 +2348,52 @@ class AdminHomeView extends GetView<AdminHomeController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Stats Summary
-              const Text(
-                'Ringkasan Hari Ini',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const Gap(12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _statCard(
-                      'Total',
-                      '${controller.stats['total']}',
-                      Colors.blue,
-                    ),
-                  ),
-                  const Gap(12),
-                  Expanded(
-                    child: _statCard(
-                      'Pending',
-                      '${controller.stats['pending']}',
-                      Colors.orange,
-                    ),
-                  ),
-                ],
-              ),
-              const Gap(12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _statCard(
-                      'High Priority',
-                      '${controller.stats['high']}',
-                      Colors.red,
-                    ),
-                  ),
-                  const Gap(12),
-                  Expanded(
-                    child: _statCard(
-                      'VIP',
-                      '${controller.stats['vip']}',
-                      Colors.purple,
-                    ),
-                  ),
-                ],
-              ),
-              const Gap(24),
+              // // Stats Summary
+              // const Text(
+              //   'Ringkasan Hari Ini',
+              //   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              // ),
+              // const Gap(12),
+              // Row(
+              //   children: [
+              //     Expanded(
+              //       child: _statCard(
+              //         'Total',
+              //         '${controller.stats['total']}',
+              //         Colors.blue,
+              //       ),
+              //     ),
+              //     const Gap(12),
+              //     Expanded(
+              //       child: _statCard(
+              //         'Pending',
+              //         '${controller.stats['pending']}',
+              //         Colors.orange,
+              //       ),
+              //     ),
+              //   ],
+              // ),
+              // const Gap(12),
+              // Row(
+              //   children: [
+              //     Expanded(
+              //       child: _statCard(
+              //         'High Priority',
+              //         '${controller.stats['high']}',
+              //         Colors.red,
+              //       ),
+              //     ),
+              //     const Gap(12),
+              //     Expanded(
+              //       child: _statCard(
+              //         'VIP',
+              //         '${controller.stats['vip']}',
+              //         Colors.purple,
+              //       ),
+              //     ),
+              //   ],
+              // ),
+              // const Gap(24),
               // Quick Actions
               const Text(
                 'Quick Actions',
@@ -2671,18 +2712,94 @@ class AdminSegmentsBinding extends Bindings {
 ###  Path: `/lib/app/modules/admin_segments/controllers/admin_segments_controller.dart`
 
 ```dart
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:alfiyah_apps/app/data/services/segment_service.dart';
 import 'package:get/get.dart';
 
 class AdminSegmentsController extends GetxController {
+  static const _refreshInterval = Duration(seconds: 10);
+
+  static const _categories = [
+    {'key': 'loyal', 'label': 'Loyal'},
+    {'key': 'aktif', 'label': 'Aktif'},
+    {'key': 'potensial', 'label': 'Potensial'},
+    {'key': 'pasif', 'label': 'Pasif'},
+  ];
+
+  static const _categoryDescriptions = {
+    'loyal': 'Pelanggan paling aktif dengan frekuensi tinggi dan nilai transaksi besar.',
+    'aktif': 'Pelanggan rutin yang stabil dengan pola booking konsisten.',
+    'potensial': 'Pelanggan dengan peluang besar untuk ditingkatkan loyalitasnya.',
+    'pasif': 'Pelanggan yang mulai pasif dan perlu strategi reaktivasi.',
+  };
+
   final isLoading = false.obs;
   final segments = <Map<String, dynamic>>[].obs;
+  final selectedCategory = 'loyal'.obs;
+  Timer? _refreshTimer;
+
+  List<Map<String, dynamic>> get loyalSegments =>
+      _filterByCategory('loyal');
+  List<Map<String, dynamic>> get aktifSegments =>
+      _filterByCategory('aktif');
+  List<Map<String, dynamic>> get potensialSegments =>
+      _filterByCategory('potensial');
+  List<Map<String, dynamic>> get pasifSegments =>
+      _filterByCategory('pasif');
+
+  List<Map<String, String>> get categoryOptions => _categories
+      .map((item) =>
+          {'key': item['key'].toString(), 'label': item['label'].toString()})
+      .toList();
+
+  String get categoryDescription =>
+      _categoryDescriptions[selectedCategory.value] ?? '';
+
+  List<Map<String, dynamic>> get filteredSegments {
+    switch (selectedCategory.value) {
+      case 'loyal':
+        return loyalSegments;
+      case 'aktif':
+        return aktifSegments;
+      case 'potensial':
+        return potensialSegments;
+      case 'pasif':
+        return pasifSegments;
+      default:
+        return loyalSegments;
+    }
+  }
+
+  void selectCategory(String key) {
+    selectedCategory.value = key;
+  }
+
+  List<Map<String, dynamic>> _filterByCategory(String key) {
+    return segments.where((item) {
+      final label = (item['customer_segment'] ?? '').toString().toLowerCase();
+      return label == key.toLowerCase();
+    }).toList();
+  }
 
   @override
   void onInit() {
     super.onInit();
     loadSegments();
+    _startAutoRefresh();
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
+      loadSegments();
+    });
+  }
+
+  @override
+  void onClose() {
+    _refreshTimer?.cancel();
+    super.onClose();
   }
 
   void loadSegments() async {
@@ -2748,17 +2865,135 @@ class AdminSegmentsView extends GetView<AdminSegmentsController> {
           );
         }
 
-        return ListView.separated(
+        final segments = controller.filteredSegments;
+
+        return ListView(
           padding: const EdgeInsets.all(16),
-          itemCount: controller.segments.length,
-          separatorBuilder: (_, __) => const Gap(12),
-          itemBuilder: (context, index) {
-            final item = controller.segments[index];
-            return _segmentCard(item);
-          },
+          children: [
+            _categoryCapsules(controller),
+            const Gap(12),
+            _categoryDescription(controller),
+            const Gap(16),
+            if (segments.isEmpty)
+              _emptyCategoryState()
+            else
+              ...segments
+                  .map((item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _segmentCard(item),
+                      ))
+                  .toList(),
+          ],
         );
       }),
     );
+  }
+
+  Widget _categoryCapsules(AdminSegmentsController controller) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Obx(() {
+        return Row(
+          children: controller.categoryOptions.map((item) {
+            final key = item['key'] ?? '';
+            final label = item['label'] ?? '';
+            final isSelected = controller.selectedCategory.value == key;
+            final colors = _categoryColors(key);
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: GestureDetector(
+                onTap: () => controller.selectCategory(key),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected ? colors.background : AppColors.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: isSelected ? colors.border : AppColors.primary.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? colors.text : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      }),
+    );
+  }
+
+  Widget _categoryDescription(AdminSegmentsController controller) {
+    return Obx(() {
+      final description = controller.categoryDescription;
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.08)),
+        ),
+        child: Text(
+          description,
+          style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+        ),
+      );
+    });
+  }
+
+  Widget _emptyCategoryState() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Center(
+        child: Text('Belum ada data pada kategori ini.'),
+      ),
+    );
+  }
+
+  _CategoryColors _categoryColors(String key) {
+    switch (key) {
+      case 'loyal':
+        return _CategoryColors(
+          background: AppColors.primary.withValues(alpha: 0.15),
+          border: AppColors.primary,
+          text: AppColors.primary,
+        );
+      case 'aktif':
+        return _CategoryColors(
+          background: AppColors.secondary.withValues(alpha: 0.2),
+          border: AppColors.secondary,
+          text: AppColors.secondary,
+        );
+      case 'potensial':
+        return _CategoryColors(
+          background: AppColors.accent.withValues(alpha: 0.18),
+          border: AppColors.accent,
+          text: AppColors.accent,
+        );
+      case 'pasif':
+        return _CategoryColors(
+          background: AppColors.primary.withValues(alpha: 0.08),
+          border: AppColors.primary.withValues(alpha: 0.5),
+          text: AppColors.primary,
+        );
+      default:
+        return _CategoryColors(
+          background: AppColors.surface,
+          border: AppColors.primary.withValues(alpha: 0.2),
+          text: AppColors.textPrimary,
+        );
+    }
   }
 
   Widget _segmentCard(Map<String, dynamic> item) {
@@ -2834,12 +3069,24 @@ class AdminSegmentsView extends GetView<AdminSegmentsController> {
           const Gap(4),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: Colors.black.withValues(alpha: 0.6)),
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
           ),
         ],
       ),
     );
   }
+}
+
+class _CategoryColors {
+  const _CategoryColors({
+    required this.background,
+    required this.border,
+    required this.text,
+  });
+
+  final Color background;
+  final Color border;
+  final Color text;
 }
 
 ```
@@ -3349,20 +3596,39 @@ class BookingBinding extends Bindings {
 ###  Path: `/lib/app/modules/booking/controllers/booking_controller.dart`
 
 ```dart
+import 'dart:async';
 import 'package:alfiyah_apps/app/data/services/booking_service.dart';
 import 'package:alfiyah_apps/app/data/services/service_service.dart';
 import 'package:get/get.dart';
 
 class BookingController extends GetxController {
+  static const _refreshInterval = Duration(seconds: 5);
+
   final bookings = <Map<String, dynamic>>[].obs;
   final isLoading = false.obs;
   final serviceTypesMap = <int, Map<String, dynamic>>{}.obs;
+  Timer? _refreshTimer;
 
   @override
   void onInit() {
     super.onInit();
     loadServiceTypes();
     loadBookings();
+    _startAutoRefresh();
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
+      loadServiceTypes();
+      loadBookings();
+    });
+  }
+
+  @override
+  void onClose() {
+    _refreshTimer?.cancel();
+    super.onClose();
   }
 
   void loadServiceTypes() async {
@@ -3448,47 +3714,47 @@ class BookingView extends GetView<BookingController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.secondary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(Icons.event_available, color: AppColors.primary),
-                    ),
-                    const Gap(12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Jadwal terdekat',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Gap(6),
-                          Text(
-                            'Wedding Make Up Premium • 11 Feb 2026',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // Container(
+              //   width: double.infinity,
+              //   padding: const EdgeInsets.all(16),
+              //   decoration: BoxDecoration(
+              //     color: AppColors.secondary.withValues(alpha: 0.2),
+              //     borderRadius: BorderRadius.circular(16),
+              //   ),
+              //   child: Row(
+              //     children: [
+              //       Container(
+              //         width: 48,
+              //         height: 48,
+              //         decoration: BoxDecoration(
+              //           color: AppColors.primary.withValues(alpha: 0.12),
+              //           borderRadius: BorderRadius.circular(16),
+              //         ),
+              //         child: Icon(Icons.event_available, color: AppColors.primary),
+              //       ),
+              //       const Gap(12),
+              //       Expanded(
+              //         child: Column(
+              //           crossAxisAlignment: CrossAxisAlignment.start,
+              //           children: const [
+              //             Text(
+              //               'Jadwal terdekat',
+              //               style: TextStyle(
+              //                 fontSize: 12,
+              //                 fontWeight: FontWeight.w600,
+              //               ),
+              //             ),
+              //             Gap(6),
+              //             Text(
+              //               'Wedding Make Up Premium • 11 Feb 2026',
+              //               style: TextStyle(fontSize: 14),
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
               const Gap(24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -3550,27 +3816,27 @@ class BookingView extends GetView<BookingController> {
                 );
               }),
               const Gap(32),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ).copyWith(
-                    overlayColor: WidgetStatePropertyAll(
-                      AppColors.secondary.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: const Text(
-                    'Buat Booking Baru',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
+              // SizedBox(
+              //   width: double.infinity,
+              //   height: 48,
+              //   child: ElevatedButton(
+              //     onPressed: () {},
+              //     style: ElevatedButton.styleFrom(
+              //       backgroundColor: AppColors.primary,
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius: BorderRadius.circular(16),
+              //       ),
+              //     ).copyWith(
+              //       overlayColor: WidgetStatePropertyAll(
+              //         AppColors.secondary.withValues(alpha: 0.3),
+              //       ),
+              //     ),
+              //     child: const Text(
+              //       'Buat Booking Baru',
+              //       style: TextStyle(color: Colors.white),
+              //     ),
+              //   ),
+              // ),
               Gap(100)
             ],
           ),
@@ -4667,16 +4933,16 @@ class ProfileController extends GetxController {
       'subtitle': 'Ubah data pribadi kamu',
       'icon': 'edit',
     },
-    {
-      'title': 'Pengaturan',
-      'subtitle': 'Kelola preferensi aplikasi',
-      'icon': 'settings',
-    },
-    {
-      'title': 'Bantuan',
-      'subtitle': 'FAQ dan dukungan',
-      'icon': 'help',
-    },
+    // {
+    //   'title': 'Pengaturan',
+    //   'subtitle': 'Kelola preferensi aplikasi',
+    //   'icon': 'settings',
+    // },
+    // {
+    //   'title': 'Bantuan',
+    //   'subtitle': 'FAQ dan dukungan',
+    //   'icon': 'help',
+    // },
   ];
 
   @override
@@ -6095,6 +6361,7 @@ void main() {
       enabled: !kReleaseMode,
       builder: (context) => const MyApp(),
     ),
+    // const MyApp(),
   );
 }
 

@@ -1,16 +1,12 @@
-import 'dart:async';
 import 'package:alfiyah_apps/app/data/services/service_service.dart';
 import 'package:alfiyah_apps/app/routes/app_pages.dart';
 import 'package:get/get.dart';
 
 class ServicesController extends GetxController {
-  static const _refreshInterval = Duration(seconds: 5);
-
   final searchQuery = ''.obs;
   final isLoading = false.obs;
 
   final packages = <Map<String, dynamic>>[].obs;
-  Timer? _refreshTimer;
 
   // Sample data (akan diganti dengan API)
   // final _samplePackages = [
@@ -138,20 +134,6 @@ class ServicesController extends GetxController {
   void onInit() {
     super.onInit();
     loadPackages();
-    _startAutoRefresh();
-  }
-
-  void _startAutoRefresh() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
-      loadPackages();
-    });
-  }
-
-  @override
-  void onClose() {
-    _refreshTimer?.cancel();
-    super.onClose();
   }
 
   void loadPackages() async {

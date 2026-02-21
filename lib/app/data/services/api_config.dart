@@ -1,6 +1,6 @@
 class ApiConfig {
   // Base URL - sesuaikan dengan backend kamu
-  static const String baseUrl = 'http://localhost:8000';
+  static const String baseUrl = 'http://103.87.67.57:8000';
   
   // Endpoints
   static const String login = '/auth/login';
@@ -8,8 +8,10 @@ class ApiConfig {
   static const String packages = '/services/packages';
   static const String serviceTypes = '/services/types';
   static const String bookings = '/bookings/';
+  static const String bookingsStream = '/bookings/stream';
   static const String myBookings = '/bookings/me';
   static const String segments = '/segments/';
+  static const String segmentsStream = '/segments/stream';
   
   // Headers
   static Map<String, String> getHeaders({String? token}) {

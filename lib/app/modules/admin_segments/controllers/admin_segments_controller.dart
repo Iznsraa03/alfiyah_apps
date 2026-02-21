@@ -4,8 +4,6 @@ import 'package:alfiyah_apps/app/data/services/segment_service.dart';
 import 'package:get/get.dart';
 
 class AdminSegmentsController extends GetxController {
-  static const _refreshInterval = Duration(seconds: 5);
-
   static const _categories = [
     {'key': 'loyal', 'label': 'Loyal'},
     {'key': 'aktif', 'label': 'Aktif'},
@@ -23,7 +21,7 @@ class AdminSegmentsController extends GetxController {
   final isLoading = false.obs;
   final segments = <Map<String, dynamic>>[].obs;
   final selectedCategory = 'loyal'.obs;
-  Timer? _refreshTimer;
+  StreamSubscription<Map<String, dynamic>>? _segmentStream;
 
   List<Map<String, dynamic>> get loyalSegments =>
       _filterByCategory('loyal');
@@ -72,19 +70,24 @@ class AdminSegmentsController extends GetxController {
   void onInit() {
     super.onInit();
     loadSegments();
-    _startAutoRefresh();
+    _startSegmentStream();
   }
 
-  void _startAutoRefresh() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
-      loadSegments();
+  void _startSegmentStream() {
+    _segmentStream?.cancel();
+    _segmentStream = SegmentService.streamSegments().listen((event) {
+      final payload = event['data'];
+      if (payload is List) {
+        segments.value = payload.cast<Map<String, dynamic>>();
+      }
+    }, onError: (error) {
+      developer.log('❌ Segment stream error: $error', name: 'AdminSegments');
     });
   }
 
   @override
   void onClose() {
-    _refreshTimer?.cancel();
+    _segmentStream?.cancel();
     super.onClose();
   }
 

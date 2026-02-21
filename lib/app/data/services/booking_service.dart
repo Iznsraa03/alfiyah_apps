@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:alfiyah_apps/app/data/services/api_config.dart';
 import 'package:alfiyah_apps/app/data/services/storage_service.dart';
+import 'package:alfiyah_apps/app/data/services/stream_service.dart';
 
 class BookingService {
   // Get all bookings (admin only)
@@ -140,6 +141,34 @@ class BookingService {
         'success': false,
         'message': 'Terjadi kesalahan: $e',
       };
+    }
+  }
+
+  static Stream<Map<String, dynamic>> streamBookings() async* {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.bookingsStream}');
+      final token = await StorageService.getToken();
+
+      developer.log('🔵 Stream Bookings Request', name: 'BookingService');
+      developer.log('URL: $url', name: 'BookingService');
+
+      final request = http.Request('GET', url)
+        ..headers.addAll(ApiConfig.getHeaders(token: token))
+        ..headers['Accept'] = 'text/event-stream';
+
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        yield* parseSseEvents(response.stream);
+      } else {
+        final errorBody = await response.stream.bytesToString();
+        developer.log(
+          '❌ Stream Bookings Failed: $errorBody',
+          name: 'BookingService',
+        );
+      }
+    } catch (e) {
+      developer.log('❌ Stream Bookings Error: $e', name: 'BookingService');
     }
   }
 

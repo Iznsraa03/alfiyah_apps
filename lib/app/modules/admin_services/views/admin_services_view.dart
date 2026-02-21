@@ -33,6 +33,9 @@ class AdminServicesView extends GetView<AdminServicesController> {
         ],
       ),
       body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
         if (controller.packages.isEmpty) {
           return const Center(
             child: Text('Belum ada package.'),
@@ -81,14 +84,14 @@ class AdminServicesView extends GetView<AdminServicesController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      package['name'] as String,
+                      package['name'] as String? ?? '-',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -96,7 +99,7 @@ class AdminServicesView extends GetView<AdminServicesController> {
                     ),
                     const Gap(4),
                     Text(
-                      package['description'] as String,
+                      package['description'] as String? ?? '- ',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.black.withValues(alpha: 0.6),
@@ -105,20 +108,38 @@ class AdminServicesView extends GetView<AdminServicesController> {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${(package['service_types'] as List).length} layanan',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${(package['service_types'] as List).length} layanan',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
+                  const Gap(6),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.edit, size: 18, color: AppColors.primary),
+                        onPressed: () => controller.showEditPackageDialog(package),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                        onPressed: () => controller.deletePackage(package['id'] as int),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -193,7 +214,7 @@ class AdminServicesView extends GetView<AdminServicesController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  type['name'] as String,
+                  type['name'] as String? ?? '-',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -201,7 +222,7 @@ class AdminServicesView extends GetView<AdminServicesController> {
                 ),
                 const Gap(4),
                 Text(
-                  type['description'] as String,
+                  type['description'] as String? ?? '- ',
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.black.withValues(alpha: 0.6),
@@ -210,13 +231,30 @@ class AdminServicesView extends GetView<AdminServicesController> {
               ],
             ),
           ),
-          Text(
-            _formatRupiah(type['price'] as String),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                _formatRupiah(type['price']?.toString() ?? '0'),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.edit, size: 18, color: AppColors.primary),
+                    onPressed: () => controller.showEditServiceTypeDialog(type),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                    onPressed: () => controller.deleteServiceType(type['id'] as int),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),

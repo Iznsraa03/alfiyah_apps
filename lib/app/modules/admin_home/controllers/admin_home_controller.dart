@@ -36,6 +36,14 @@ class AdminHomeController extends GetxController {
     };
   }
 
+  int get totalPelanggan {
+    final uniqueUserIds = bookings
+        .map((b) => b['user_id'])
+        .whereType<int>()
+        .toSet();
+    return uniqueUserIds.length;
+  }
+
   void setFilter(String filter) {
     selectedFilter.value = filter;
   }

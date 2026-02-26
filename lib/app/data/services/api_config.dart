@@ -1,6 +1,6 @@
 class ApiConfig {
   // Base URL - sesuaikan dengan backend kamu
-  static const String baseUrl = 'http://103.87.67.57:8000';
+  static const String baseUrl = 'https://alfiyah.my.id';
   
   // Endpoints
   static const String login = '/auth/login';

@@ -81,6 +81,56 @@ class AdminHomeView extends GetView<AdminHomeController> {
               //   ],
               // ),
               // const Gap(24),
+              // Total Pelanggan
+              Obx(() => Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.people_alt_outlined,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const Gap(16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${controller.totalPelanggan}',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            Text(
+                              'Total Pelanggan',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.black.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  )),
+              const Gap(24),
               // Quick Actions
               const Text(
                 'Quick Actions',

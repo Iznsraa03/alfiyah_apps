@@ -20,6 +20,7 @@
         │   │   └── segment_service.dart
         │   │   └── service_service.dart
         │   │   └── storage_service.dart
+        │   │   └── stream_service.dart
         ├── modules/
         │   ├── Services/
         │   │   ├── bindings/
@@ -623,7 +624,7 @@ Widget serviceTypeCard({
 ```dart
 class ApiConfig {
   // Base URL - sesuaikan dengan backend kamu
-  static const String baseUrl = 'http://localhost:8000';
+  static const String baseUrl = 'https://alfiyah.my.id';
   
   // Endpoints
   static const String login = '/auth/login';
@@ -631,8 +632,10 @@ class ApiConfig {
   static const String packages = '/services/packages';
   static const String serviceTypes = '/services/types';
   static const String bookings = '/bookings/';
+  static const String bookingsStream = '/bookings/stream';
   static const String myBookings = '/bookings/me';
   static const String segments = '/segments/';
+  static const String segmentsStream = '/segments/stream';
   
   // Headers
   static Map<String, String> getHeaders({String? token}) {
@@ -909,6 +912,7 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:alfiyah_apps/app/data/services/api_config.dart';
 import 'package:alfiyah_apps/app/data/services/storage_service.dart';
+import 'package:alfiyah_apps/app/data/services/stream_service.dart';
 
 class BookingService {
   // Get all bookings (admin only)
@@ -1049,6 +1053,34 @@ class BookingService {
     }
   }
 
+  static Stream<Map<String, dynamic>> streamBookings() async* {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.bookingsStream}');
+      final token = await StorageService.getToken();
+
+      developer.log('🔵 Stream Bookings Request', name: 'BookingService');
+      developer.log('URL: $url', name: 'BookingService');
+
+      final request = http.Request('GET', url)
+        ..headers.addAll(ApiConfig.getHeaders(token: token))
+        ..headers['Accept'] = 'text/event-stream';
+
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        yield* parseSseEvents(response.stream);
+      } else {
+        final errorBody = await response.stream.bytesToString();
+        developer.log(
+          '❌ Stream Bookings Failed: $errorBody',
+          name: 'BookingService',
+        );
+      }
+    } catch (e) {
+      developer.log('❌ Stream Bookings Error: $e', name: 'BookingService');
+    }
+  }
+
   // Update booking status (admin only)
   static Future<Map<String, dynamic>> updateBookingStatus({
     required int bookingId,
@@ -1108,8 +1140,37 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:alfiyah_apps/app/data/services/api_config.dart';
 import 'package:alfiyah_apps/app/data/services/storage_service.dart';
+import 'package:alfiyah_apps/app/data/services/stream_service.dart';
 
 class SegmentService {
+  static Stream<Map<String, dynamic>> streamSegments() async* {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.segmentsStream}');
+      final token = await StorageService.getToken();
+
+      developer.log('🔵 Stream Segments Request', name: 'SegmentService');
+      developer.log('URL: $url', name: 'SegmentService');
+
+      final request = http.Request('GET', url)
+        ..headers.addAll(ApiConfig.getHeaders(token: token))
+        ..headers['Accept'] = 'text/event-stream';
+
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        yield* parseSseEvents(response.stream);
+      } else {
+        final errorBody = await response.stream.bytesToString();
+        developer.log(
+          '❌ Stream Segments Failed: $errorBody',
+          name: 'SegmentService',
+        );
+      }
+    } catch (e) {
+      developer.log('❌ Stream Segments Error: $e', name: 'SegmentService');
+    }
+  }
+
   static Future<Map<String, dynamic>> getSegments() async {
     try {
       final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.segments}');
@@ -1168,10 +1229,10 @@ class ServiceService {
     try {
       final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.packages}');
       final token = await StorageService.getToken();
-      
+
       developer.log('🔵 Get Packages Request', name: 'ServiceService');
       developer.log('URL: $url', name: 'ServiceService');
-      
+
       final response = await http.get(
         url,
         headers: ApiConfig.getHeaders(token: token),
@@ -1198,6 +1259,286 @@ class ServiceService {
       }
     } catch (e) {
       developer.log('❌ Get Packages Error: $e', name: 'ServiceService');
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan: $e',
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> createPackage({
+    required String name,
+    String? description,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.packages}');
+      final token = await StorageService.getToken();
+      final body = {
+        'name': name,
+        'description': description?.isEmpty == true ? null : description,
+      };
+
+      developer.log('🔵 Create Package Request', name: 'ServiceService');
+      developer.log('URL: $url', name: 'ServiceService');
+      developer.log('Body: ${json.encode(body)}', name: 'ServiceService');
+
+      final response = await http.post(
+        url,
+        headers: ApiConfig.getHeaders(token: token),
+        body: json.encode(body),
+      );
+
+      developer.log('🔵 Create Package Response', name: 'ServiceService');
+      developer.log('Status Code: ${response.statusCode}', name: 'ServiceService');
+      developer.log('Body: ${response.body}', name: 'ServiceService');
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        return {
+          'success': true,
+          'data': data,
+        };
+      } else {
+        final error = json.decode(response.body);
+        return {
+          'success': false,
+          'message': error['detail'] ?? 'Gagal menambahkan package',
+        };
+      }
+    } catch (e) {
+      developer.log('❌ Create Package Error: $e', name: 'ServiceService');
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan: $e',
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> updatePackage({
+    required int packageId,
+    String? name,
+    String? description,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.packages}/$packageId');
+      final token = await StorageService.getToken();
+      final body = {
+        if (name != null) 'name': name,
+        if (description != null) 'description': description,
+      };
+
+      developer.log('🔵 Update Package Request', name: 'ServiceService');
+      developer.log('URL: $url', name: 'ServiceService');
+      developer.log('Body: ${json.encode(body)}', name: 'ServiceService');
+
+      final response = await http.patch(
+        url,
+        headers: ApiConfig.getHeaders(token: token),
+        body: json.encode(body),
+      );
+
+      developer.log('🔵 Update Package Response', name: 'ServiceService');
+      developer.log('Status Code: ${response.statusCode}', name: 'ServiceService');
+      developer.log('Body: ${response.body}', name: 'ServiceService');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'success': true,
+          'data': data,
+        };
+      } else {
+        final error = json.decode(response.body);
+        return {
+          'success': false,
+          'message': error['detail'] ?? 'Gagal memperbarui package',
+        };
+      }
+    } catch (e) {
+      developer.log('❌ Update Package Error: $e', name: 'ServiceService');
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan: $e',
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> deletePackage({
+    required int packageId,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.packages}/$packageId');
+      final token = await StorageService.getToken();
+
+      developer.log('🔵 Delete Package Request', name: 'ServiceService');
+      developer.log('URL: $url', name: 'ServiceService');
+
+      final response = await http.delete(
+        url,
+        headers: ApiConfig.getHeaders(token: token),
+      );
+
+      developer.log('🔵 Delete Package Response', name: 'ServiceService');
+      developer.log('Status Code: ${response.statusCode}', name: 'ServiceService');
+      developer.log('Body: ${response.body}', name: 'ServiceService');
+
+      if (response.statusCode == 204) {
+        return {
+          'success': true,
+        };
+      } else {
+        final error = response.body.isEmpty ? null : json.decode(response.body);
+        return {
+          'success': false,
+          'message': error?['detail'] ?? 'Gagal menghapus package',
+        };
+      }
+    } catch (e) {
+      developer.log('❌ Delete Package Error: $e', name: 'ServiceService');
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan: $e',
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> createServiceType({
+    required int packageId,
+    required String name,
+    String? description,
+    required double price,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.serviceTypes}');
+      final token = await StorageService.getToken();
+      final body = {
+        'package_id': packageId,
+        'name': name,
+        'description': description?.isEmpty == true ? null : description,
+        'price': price,
+      };
+
+      developer.log('🔵 Create Service Type Request', name: 'ServiceService');
+      developer.log('URL: $url', name: 'ServiceService');
+      developer.log('Body: ${json.encode(body)}', name: 'ServiceService');
+
+      final response = await http.post(
+        url,
+        headers: ApiConfig.getHeaders(token: token),
+        body: json.encode(body),
+      );
+
+      developer.log('🔵 Create Service Type Response', name: 'ServiceService');
+      developer.log('Status Code: ${response.statusCode}', name: 'ServiceService');
+      developer.log('Body: ${response.body}', name: 'ServiceService');
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        return {
+          'success': true,
+          'data': data,
+        };
+      } else {
+        final error = json.decode(response.body);
+        return {
+          'success': false,
+          'message': error['detail'] ?? 'Gagal menambahkan service type',
+        };
+      }
+    } catch (e) {
+      developer.log('❌ Create Service Type Error: $e', name: 'ServiceService');
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan: $e',
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateServiceType({
+    required int serviceTypeId,
+    String? name,
+    String? description,
+    double? price,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.serviceTypes}/$serviceTypeId');
+      final token = await StorageService.getToken();
+      final body = {
+        if (name != null) 'name': name,
+        if (description != null) 'description': description,
+        if (price != null) 'price': price,
+      };
+
+      developer.log('🔵 Update Service Type Request', name: 'ServiceService');
+      developer.log('URL: $url', name: 'ServiceService');
+      developer.log('Body: ${json.encode(body)}', name: 'ServiceService');
+
+      final response = await http.patch(
+        url,
+        headers: ApiConfig.getHeaders(token: token),
+        body: json.encode(body),
+      );
+
+      developer.log('🔵 Update Service Type Response', name: 'ServiceService');
+      developer.log('Status Code: ${response.statusCode}', name: 'ServiceService');
+      developer.log('Body: ${response.body}', name: 'ServiceService');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'success': true,
+          'data': data,
+        };
+      } else {
+        final error = json.decode(response.body);
+        return {
+          'success': false,
+          'message': error['detail'] ?? 'Gagal memperbarui service type',
+        };
+      }
+    } catch (e) {
+      developer.log('❌ Update Service Type Error: $e', name: 'ServiceService');
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan: $e',
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteServiceType({
+    required int serviceTypeId,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.serviceTypes}/$serviceTypeId');
+      final token = await StorageService.getToken();
+
+      developer.log('🔵 Delete Service Type Request', name: 'ServiceService');
+      developer.log('URL: $url', name: 'ServiceService');
+
+      final response = await http.delete(
+        url,
+        headers: ApiConfig.getHeaders(token: token),
+      );
+
+      developer.log('🔵 Delete Service Type Response', name: 'ServiceService');
+      developer.log('Status Code: ${response.statusCode}', name: 'ServiceService');
+      developer.log('Body: ${response.body}', name: 'ServiceService');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'success': true,
+          'data': data,
+        };
+      } else {
+        final error = response.body.isEmpty ? null : json.decode(response.body);
+        return {
+          'success': false,
+          'message': error?['detail'] ?? 'Gagal menghapus service type',
+        };
+      }
+    } catch (e) {
+      developer.log('❌ Delete Service Type Error: $e', name: 'ServiceService');
       return {
         'success': false,
         'message': 'Terjadi kesalahan: $e',
@@ -1276,6 +1617,36 @@ class StorageService {
 }
 
 ```
+###  Path: `/lib/app/data/services/stream_service.dart`
+
+```dart
+import 'dart:convert';
+
+Stream<Map<String, dynamic>> parseSseEvents(Stream<List<int>> byteStream) {
+  return byteStream
+      .transform(utf8.decoder)
+      .transform(const LineSplitter())
+      .where((line) => line.startsWith('data:'))
+      .map((line) => line.substring(5).trim())
+      .where((payload) => payload.isNotEmpty)
+      .map((payload) {
+    final decoded = json.decode(payload);
+    if (decoded is Map<String, dynamic>) {
+      final data = decoded['data'];
+      if (data is String && data.isNotEmpty) {
+        try {
+          decoded['data'] = json.decode(data);
+        } catch (_) {
+          decoded['data'] = data;
+        }
+      }
+      return decoded;
+    }
+    return <String, dynamic>{'data': decoded};
+  });
+}
+
+```
 ###  Path: `/lib/app/modules/Services/bindings/services_binding.dart`
 
 ```dart
@@ -1296,19 +1667,15 @@ class ServicesBinding extends Bindings {
 ###  Path: `/lib/app/modules/Services/controllers/services_controller.dart`
 
 ```dart
-import 'dart:async';
 import 'package:alfiyah_apps/app/data/services/service_service.dart';
 import 'package:alfiyah_apps/app/routes/app_pages.dart';
 import 'package:get/get.dart';
 
 class ServicesController extends GetxController {
-  static const _refreshInterval = Duration(seconds: 5);
-
   final searchQuery = ''.obs;
   final isLoading = false.obs;
 
   final packages = <Map<String, dynamic>>[].obs;
-  Timer? _refreshTimer;
 
   // Sample data (akan diganti dengan API)
   // final _samplePackages = [
@@ -1436,20 +1803,6 @@ class ServicesController extends GetxController {
   void onInit() {
     super.onInit();
     loadPackages();
-    _startAutoRefresh();
-  }
-
-  void _startAutoRefresh() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
-      loadPackages();
-    });
-  }
-
-  @override
-  void onClose() {
-    _refreshTimer?.cancel();
-    super.onClose();
   }
 
   void loadPackages() async {
@@ -2136,70 +2489,13 @@ import 'package:alfiyah_apps/app/data/services/service_service.dart';
 import 'package:get/get.dart';
 
 class AdminHomeController extends GetxController {
-  static const _refreshInterval = Duration(seconds: 5);
-
   final selectedFilter = 'all'.obs;
   final isLoading = false.obs;
   final serviceTypesMap = <int, Map<String, dynamic>>{}.obs;
-  
-  final bookings = <Map<String, dynamic>>[].obs;
-  Timer? _refreshTimer;
-  
-  final _sampleBookings = [
-    {
-      'id': 1,
-      'user_name': 'Sarah Amelia',
-      'service_type': 'Wedding Make Up Premium',
-      'tanggal_acara': '2026-02-15 14:00',
-      'jumlah_client': 150,
-      'price_locked': '12500000.00',
-      'status': 'pending',
-      'priority_score': 95,
-      'priority_segment': 'high',
-      'urgency_level': 'urgent',
-      'monetary_level': 'vip',
-    },
-    {
-      'id': 2,
-      'user_name': 'Dina Kartika',
-      'service_type': 'Engagement Photo',
-      'tanggal_acara': '2026-02-20 10:00',
-      'jumlah_client': 2,
-      'price_locked': '3200000.00',
-      'status': 'confirmed',
-      'priority_score': 78,
-      'priority_segment': 'medium',
-      'urgency_level': 'soon',
-      'monetary_level': 'premium',
-    },
-    {
-      'id': 3,
-      'user_name': 'Rina Putri',
-      'service_type': 'Prewedding Indoor',
-      'tanggal_acara': '2026-03-05 09:00',
-      'jumlah_client': 2,
-      'price_locked': '5750000.00',
-      'status': 'pending',
-      'priority_score': 62,
-      'priority_segment': 'medium',
-      'urgency_level': 'upcoming',
-      'monetary_level': 'premium',
-    },
-    {
-      'id': 4,
-      'user_name': 'Maya Sari',
-      'service_type': 'Reguler Party',
-      'tanggal_acara': '2026-03-10 15:00',
-      'jumlah_client': 1,
-      'price_locked': '200000.00',
-      'status': 'pending',
-      'priority_score': 45,
-      'priority_segment': 'low',
-      'urgency_level': 'upcoming',
-      'monetary_level': 'regular',
-    },
-  ];
 
+  final bookings = <Map<String, dynamic>>[].obs;
+  StreamSubscription<Map<String, dynamic>>? _bookingStream;
+  
   List<Map<String, dynamic>> get filteredBookings {
     if (selectedFilter.value == 'all') {
       return bookings;
@@ -2244,20 +2540,24 @@ class AdminHomeController extends GetxController {
     super.onInit();
     loadServiceTypes();
     loadBookings();
-    _startAutoRefresh();
+    _startBookingStream();
   }
 
-  void _startAutoRefresh() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
-      loadServiceTypes();
-      loadBookings();
+  void _startBookingStream() {
+    _bookingStream?.cancel();
+    _bookingStream = BookingService.streamBookings().listen((event) {
+      final payload = event['data'];
+      if (payload is Map<String, dynamic>) {
+        _upsertBooking(payload);
+      }
+    }, onError: (error) {
+      developer.log('❌ Booking stream error: $error', name: 'AdminHome');
     });
   }
 
   @override
   void onClose() {
-    _refreshTimer?.cancel();
+    _bookingStream?.cancel();
     super.onClose();
   }
 
@@ -2283,13 +2583,60 @@ class AdminHomeController extends GetxController {
     isLoading.value = true;
     final result = await BookingService.getAllBookings();
     isLoading.value = false;
-    
+
     if (result['success'] == true) {
       bookings.value = (result['data'] as List).cast<Map<String, dynamic>>();
+      _sortBookingsByLatest();
       developer.log('✅ Bookings loaded: ${bookings.length} items', name: 'AdminHome');
     } else {
       developer.log('❌ Failed to load bookings', name: 'AdminHome');
     }
+  }
+
+  void _upsertBooking(Map<String, dynamic> booking) {
+    final bookingId = booking['id'] as int?;
+    if (bookingId == null) {
+      return;
+    }
+
+    final index = bookings.indexWhere((item) => item['id'] == bookingId);
+    if (index == -1) {
+      bookings.add(booking);
+    } else {
+      bookings[index] = booking;
+    }
+    _sortBookingsByLatest();
+  }
+
+  void _sortBookingsByLatest() {
+    if (bookings.isEmpty) {
+      return;
+    }
+
+    bookings.sort((a, b) {
+      final aDate = _extractLatestTimestamp(a);
+      final bDate = _extractLatestTimestamp(b);
+      return bDate.compareTo(aDate);
+    });
+    bookings.refresh();
+  }
+
+  DateTime _extractLatestTimestamp(Map<String, dynamic> booking) {
+    final fields = [
+      booking['updated_priority_at'],
+      booking['tanggal_booking'],
+      booking['tanggal_acara'],
+    ];
+
+    for (final value in fields) {
+      if (value is String) {
+        final parsed = DateTime.tryParse(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   String getServiceName(int id) => serviceTypesMap[id]?['name'] ?? 'Service';
@@ -2718,8 +3065,6 @@ import 'package:alfiyah_apps/app/data/services/segment_service.dart';
 import 'package:get/get.dart';
 
 class AdminSegmentsController extends GetxController {
-  static const _refreshInterval = Duration(seconds: 10);
-
   static const _categories = [
     {'key': 'loyal', 'label': 'Loyal'},
     {'key': 'aktif', 'label': 'Aktif'},
@@ -2737,7 +3082,7 @@ class AdminSegmentsController extends GetxController {
   final isLoading = false.obs;
   final segments = <Map<String, dynamic>>[].obs;
   final selectedCategory = 'loyal'.obs;
-  Timer? _refreshTimer;
+  StreamSubscription<Map<String, dynamic>>? _segmentStream;
 
   List<Map<String, dynamic>> get loyalSegments =>
       _filterByCategory('loyal');
@@ -2786,19 +3131,24 @@ class AdminSegmentsController extends GetxController {
   void onInit() {
     super.onInit();
     loadSegments();
-    _startAutoRefresh();
+    _startSegmentStream();
   }
 
-  void _startAutoRefresh() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
-      loadSegments();
+  void _startSegmentStream() {
+    _segmentStream?.cancel();
+    _segmentStream = SegmentService.streamSegments().listen((event) {
+      final payload = event['data'];
+      if (payload is List) {
+        segments.value = payload.cast<Map<String, dynamic>>();
+      }
+    }, onError: (error) {
+      developer.log('❌ Segment stream error: $error', name: 'AdminSegments');
     });
   }
 
   @override
   void onClose() {
-    _refreshTimer?.cancel();
+    _segmentStream?.cancel();
     super.onClose();
   }
 
@@ -3110,44 +3460,13 @@ class AdminServicesBinding extends Bindings {
 ###  Path: `/lib/app/modules/admin_services/controllers/admin_services_controller.dart`
 
 ```dart
+import 'package:alfiyah_apps/app/data/services/service_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class AdminServicesController extends GetxController {
-  final packages = [
-    {
-      'id': 1,
-      'name': 'Makeup Party',
-      'description': 'Party-ready glam makeup',
-      'service_types': [
-        {
-          'id': 1,
-          'name': 'Premium Party',
-          'description': 'Premium party look with styling',
-          'price': '750000.00',
-        },
-        {
-          'id': 2,
-          'name': 'Exclusive Party',
-          'description': 'Exclusive party look with luxury products',
-          'price': '1200000.00',
-        },
-      ],
-    },
-    {
-      'id': 2,
-      'name': 'Makeup Wisuda',
-      'description': 'Graduation makeup packages',
-      'service_types': [
-        {
-          'id': 3,
-          'name': 'Premium Wisuda',
-          'description': 'Premium graduation makeup',
-          'price': '850000.00',
-        },
-      ],
-    },
-  ].obs;
+  final packages = <Map<String, dynamic>>[].obs;
+  final isLoading = false.obs;
 
   final packageNameController = TextEditingController();
   final packageDescController = TextEditingController();
@@ -3155,78 +3474,159 @@ class AdminServicesController extends GetxController {
   final serviceDescController = TextEditingController();
   final servicePriceController = TextEditingController();
 
+  @override
+  void onInit() {
+    super.onInit();
+    loadPackages();
+  }
+
+  Future<void> loadPackages() async {
+    isLoading.value = true;
+    final result = await ServiceService.getPackages();
+    isLoading.value = false;
+
+    if (result['success'] == true) {
+      packages.value = (result['data'] as List).cast<Map<String, dynamic>>();
+    } else {
+      Get.snackbar('Error', result['message'] ?? 'Gagal memuat package');
+    }
+  }
+
   void showAddPackageDialog() {
     packageNameController.clear();
     packageDescController.clear();
 
     Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Tambah Package Baru',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+      _buildPackageDialog(
+        title: 'Tambah Package Baru',
+        onSave: addPackage,
+      ),
+    );
+  }
+
+  void showEditPackageDialog(Map<String, dynamic> package) {
+    packageNameController.text = package['name']?.toString() ?? '';
+    packageDescController.text = package['description']?.toString() ?? '';
+
+    Get.dialog(
+      _buildPackageDialog(
+        title: 'Edit Package',
+        onSave: () => updatePackage(package['id'] as int),
+      ),
+    );
+  }
+
+  Widget _buildPackageDialog({
+    required String title,
+    required VoidCallback onSave,
+  }) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: packageNameController,
+              decoration: const InputDecoration(
+                labelText: 'Nama Package',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: packageNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nama Package',
-                  border: OutlineInputBorder(),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: packageDescController,
+              decoration: const InputDecoration(
+                labelText: 'Deskripsi',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text('Batal'),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: packageDescController,
-                decoration: const InputDecoration(
-                  labelText: 'Deskripsi',
-                  border: OutlineInputBorder(),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: onSave,
+                  child: const Text('Simpan'),
                 ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: const Text('Batal'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: addPackage,
-                    child: const Text('Simpan'),
-                  ),
-                ],
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void addPackage() {
+  Future<void> addPackage() async {
     if (packageNameController.text.isEmpty) {
       Get.snackbar('Error', 'Nama package harus diisi');
       return;
     }
 
-    // TODO: Call API
-    packages.add({
-      'id': packages.length + 1,
-      'name': packageNameController.text,
-      'description': packageDescController.text,
-      'service_types': [],
-    });
+    final result = await ServiceService.createPackage(
+      name: packageNameController.text.trim(),
+      description: packageDescController.text.trim(),
+    );
 
-    Get.back();
-    Get.snackbar('Berhasil', 'Package berhasil ditambahkan');
+    if (result['success'] == true) {
+      packages.add(result['data'] as Map<String, dynamic>);
+      Get.back();
+      Get.snackbar('Berhasil', 'Package berhasil ditambahkan');
+    } else {
+      Get.snackbar('Error', result['message'] ?? 'Gagal menambahkan package');
+    }
+  }
+
+  Future<void> updatePackage(int packageId) async {
+    if (packageNameController.text.isEmpty) {
+      Get.snackbar('Error', 'Nama package harus diisi');
+      return;
+    }
+
+    final result = await ServiceService.updatePackage(
+      packageId: packageId,
+      name: packageNameController.text.trim(),
+      description: packageDescController.text.trim(),
+    );
+
+    if (result['success'] == true) {
+      final updated = result['data'] as Map<String, dynamic>;
+      final index = packages.indexWhere((item) => item['id'] == packageId);
+      if (index != -1) {
+        packages[index] = updated;
+        packages.refresh();
+      }
+      Get.back();
+      Get.snackbar('Berhasil', 'Package berhasil diperbarui');
+    } else {
+      Get.snackbar('Error', result['message'] ?? 'Gagal memperbarui package');
+    }
+  }
+
+  Future<void> deletePackage(int packageId) async {
+    final confirmed = await _confirmDelete();
+    if (!confirmed) return;
+
+    final result = await ServiceService.deletePackage(packageId: packageId);
+    if (result['success'] == true) {
+      packages.removeWhere((item) => item['id'] == packageId);
+      Get.snackbar('Berhasil', 'Package berhasil dihapus');
+    } else {
+      Get.snackbar('Error', result['message'] ?? 'Gagal menghapus package');
+    }
   }
 
   void showAddServiceTypeDialog(int packageId) {
@@ -3235,88 +3635,193 @@ class AdminServicesController extends GetxController {
     servicePriceController.clear();
 
     Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Tambah Service Type',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+      _buildServiceTypeDialog(
+        title: 'Tambah Service Type',
+        onSave: () => addServiceType(packageId),
+      ),
+    );
+  }
+
+  void showEditServiceTypeDialog(Map<String, dynamic> type) {
+    serviceNameController.text = type['name']?.toString() ?? '';
+    serviceDescController.text = type['description']?.toString() ?? '';
+    servicePriceController.text = (type['price'] ?? '').toString();
+
+    Get.dialog(
+      _buildServiceTypeDialog(
+        title: 'Edit Service Type',
+        onSave: () => updateServiceType(type['id'] as int),
+      ),
+    );
+  }
+
+  Widget _buildServiceTypeDialog({
+    required String title,
+    required VoidCallback onSave,
+  }) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: serviceNameController,
+              decoration: const InputDecoration(
+                labelText: 'Nama Layanan',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: serviceNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nama Layanan',
-                  border: OutlineInputBorder(),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: serviceDescController,
+              decoration: const InputDecoration(
+                labelText: 'Deskripsi',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: servicePriceController,
+              decoration: const InputDecoration(
+                labelText: 'Harga',
+                border: OutlineInputBorder(),
+                prefixText: 'Rp ',
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text('Batal'),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: serviceDescController,
-                decoration: const InputDecoration(
-                  labelText: 'Deskripsi',
-                  border: OutlineInputBorder(),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: onSave,
+                  child: const Text('Simpan'),
                 ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: servicePriceController,
-                decoration: const InputDecoration(
-                  labelText: 'Harga',
-                  border: OutlineInputBorder(),
-                  prefixText: 'Rp ',
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: const Text('Batal'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () => addServiceType(packageId),
-                    child: const Text('Simpan'),
-                  ),
-                ],
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void addServiceType(int packageId) {
+  Future<void> addServiceType(int packageId) async {
     if (serviceNameController.text.isEmpty || servicePriceController.text.isEmpty) {
       Get.snackbar('Error', 'Nama dan harga harus diisi');
       return;
     }
 
-    // TODO: Call API
-    final packageIndex = packages.indexWhere((p) => p['id'] == packageId);
-    if (packageIndex != -1) {
-      final serviceTypes = packages[packageIndex]['service_types'] as List;
-      serviceTypes.add({
-        'id': serviceTypes.length + 1,
-        'name': serviceNameController.text,
-        'description': serviceDescController.text,
-        'price': servicePriceController.text,
-      });
-      packages.refresh();
+    final price = _parsePrice(servicePriceController.text);
+    if (price == null) {
+      Get.snackbar('Error', 'Harga tidak valid');
+      return;
     }
 
-    Get.back();
-    Get.snackbar('Berhasil', 'Service type berhasil ditambahkan');
+    final result = await ServiceService.createServiceType(
+      packageId: packageId,
+      name: serviceNameController.text.trim(),
+      description: serviceDescController.text.trim(),
+      price: price,
+    );
+
+    if (result['success'] == true) {
+      final updatedPackage = result['data'] as Map<String, dynamic>;
+      _replacePackage(updatedPackage);
+      Get.back();
+      Get.snackbar('Berhasil', 'Service type berhasil ditambahkan');
+    } else {
+      Get.snackbar('Error', result['message'] ?? 'Gagal menambahkan service type');
+    }
+  }
+
+  Future<void> updateServiceType(int serviceTypeId) async {
+    if (serviceNameController.text.isEmpty || servicePriceController.text.isEmpty) {
+      Get.snackbar('Error', 'Nama dan harga harus diisi');
+      return;
+    }
+
+    final price = _parsePrice(servicePriceController.text);
+    if (price == null) {
+      Get.snackbar('Error', 'Harga tidak valid');
+      return;
+    }
+
+    final result = await ServiceService.updateServiceType(
+      serviceTypeId: serviceTypeId,
+      name: serviceNameController.text.trim(),
+      description: serviceDescController.text.trim(),
+      price: price,
+    );
+
+    if (result['success'] == true) {
+      final updatedPackage = result['data'] as Map<String, dynamic>;
+      _replacePackage(updatedPackage);
+      Get.back();
+      Get.snackbar('Berhasil', 'Service type berhasil diperbarui');
+    } else {
+      Get.snackbar('Error', result['message'] ?? 'Gagal memperbarui service type');
+    }
+  }
+
+  Future<void> deleteServiceType(int serviceTypeId) async {
+    final confirmed = await _confirmDelete();
+    if (!confirmed) return;
+
+    final result = await ServiceService.deleteServiceType(serviceTypeId: serviceTypeId);
+    if (result['success'] == true) {
+      final updatedPackage = result['data'] as Map<String, dynamic>;
+      _replacePackage(updatedPackage);
+      Get.snackbar('Berhasil', 'Service type berhasil dihapus');
+    } else {
+      Get.snackbar('Error', result['message'] ?? 'Gagal menghapus service type');
+    }
+  }
+
+  void _replacePackage(Map<String, dynamic> updatedPackage) {
+    final index = packages.indexWhere((item) => item['id'] == updatedPackage['id']);
+    if (index != -1) {
+      packages[index] = updatedPackage;
+      packages.refresh();
+    }
+  }
+
+  Future<bool> _confirmDelete() async {
+    final result = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Konfirmasi'),
+        content: const Text('Yakin ingin menghapus item ini?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  double? _parsePrice(String raw) {
+    final sanitized = raw.replaceAll('.', '').replaceAll(',', '').trim();
+    return double.tryParse(sanitized);
   }
 
   @override
@@ -3369,6 +3874,9 @@ class AdminServicesView extends GetView<AdminServicesController> {
         ],
       ),
       body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
         if (controller.packages.isEmpty) {
           return const Center(
             child: Text('Belum ada package.'),
@@ -3417,14 +3925,14 @@ class AdminServicesView extends GetView<AdminServicesController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      package['name'] as String,
+                      package['name'] as String? ?? '-',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -3432,7 +3940,7 @@ class AdminServicesView extends GetView<AdminServicesController> {
                     ),
                     const Gap(4),
                     Text(
-                      package['description'] as String,
+                      package['description'] as String? ?? '- ',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.black.withValues(alpha: 0.6),
@@ -3441,20 +3949,38 @@ class AdminServicesView extends GetView<AdminServicesController> {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${(package['service_types'] as List).length} layanan',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${(package['service_types'] as List).length} layanan',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
+                  const Gap(6),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.edit, size: 18, color: AppColors.primary),
+                        onPressed: () => controller.showEditPackageDialog(package),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                        onPressed: () => controller.deletePackage(package['id'] as int),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -3529,7 +4055,7 @@ class AdminServicesView extends GetView<AdminServicesController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  type['name'] as String,
+                  type['name'] as String? ?? '-',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -3537,7 +4063,7 @@ class AdminServicesView extends GetView<AdminServicesController> {
                 ),
                 const Gap(4),
                 Text(
-                  type['description'] as String,
+                  type['description'] as String? ?? '- ',
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.black.withValues(alpha: 0.6),
@@ -3546,13 +4072,30 @@ class AdminServicesView extends GetView<AdminServicesController> {
               ],
             ),
           ),
-          Text(
-            _formatRupiah(type['price'] as String),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                _formatRupiah(type['price']?.toString() ?? '0'),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.edit, size: 18, color: AppColors.primary),
+                    onPressed: () => controller.showEditServiceTypeDialog(type),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                    onPressed: () => controller.deleteServiceType(type['id'] as int),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
@@ -3596,39 +4139,20 @@ class BookingBinding extends Bindings {
 ###  Path: `/lib/app/modules/booking/controllers/booking_controller.dart`
 
 ```dart
-import 'dart:async';
 import 'package:alfiyah_apps/app/data/services/booking_service.dart';
 import 'package:alfiyah_apps/app/data/services/service_service.dart';
 import 'package:get/get.dart';
 
 class BookingController extends GetxController {
-  static const _refreshInterval = Duration(seconds: 5);
-
   final bookings = <Map<String, dynamic>>[].obs;
   final isLoading = false.obs;
   final serviceTypesMap = <int, Map<String, dynamic>>{}.obs;
-  Timer? _refreshTimer;
 
   @override
   void onInit() {
     super.onInit();
     loadServiceTypes();
     loadBookings();
-    _startAutoRefresh();
-  }
-
-  void _startAutoRefresh() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
-      loadServiceTypes();
-      loadBookings();
-    });
-  }
-
-  @override
-  void onClose() {
-    _refreshTimer?.cancel();
-    super.onClose();
   }
 
   void loadServiceTypes() async {
@@ -3650,11 +4174,11 @@ class BookingController extends GetxController {
 
   void loadBookings() async {
     isLoading.value = true;
-    
+
     final result = await BookingService.getMyBookings();
-    
+
     isLoading.value = false;
-    
+
     if (result['success'] == true) {
       final data = result['data'] as List;
       bookings.value = data.cast<Map<String, dynamic>>();
@@ -3666,7 +4190,7 @@ class BookingController extends GetxController {
       );
     }
   }
-  
+
   String getServiceName(int serviceTypeId) {
     final serviceType = serviceTypesMap[serviceTypeId];
     return serviceType?['name'] ?? 'Service ID: $serviceTypeId';
